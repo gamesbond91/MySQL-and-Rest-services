@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27428.2027
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleRestService", "SimpleRestService\SimpleRestService.csproj", "{AA6BA071-1A4C-4B66-A8E3-0A0FCAB0F374}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleRestService.Tests", "SimpleRestService.Tests\SimpleRestService.Tests.csproj", "{A6800153-1616-44B4-87C9-98B1BB7C8CFB}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{AA6BA071-1A4C-4B66-A8E3-0A0FCAB0F374}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA6BA071-1A4C-4B66-A8E3-0A0FCAB0F374}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA6BA071-1A4C-4B66-A8E3-0A0FCAB0F374}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA6BA071-1A4C-4B66-A8E3-0A0FCAB0F374}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6800153-1616-44B4-87C9-98B1BB7C8CFB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6800153-1616-44B4-87C9-98B1BB7C8CFB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6800153-1616-44B4-87C9-98B1BB7C8CFB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6800153-1616-44B4-87C9-98B1BB7C8CFB}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CA4B5145-8201-4727-8FAD-8528B57FB329}
+	EndGlobalSection
+EndGlobal
