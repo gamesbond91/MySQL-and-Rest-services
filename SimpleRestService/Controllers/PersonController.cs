@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Web.Http;
 using SimpleRestService.Models;
-using SimpleRestService;
 using System.Net.Http;
 
 namespace SimpleRestService.Controllers
@@ -20,17 +18,8 @@ namespace SimpleRestService.Controllers
         // GET: api/Person/5
         public Person Get(int id)
         {
-            var person = new Person()
-            {
-                ID = id,
-                LastName = "Elod",
-                FirstName = new Guid().ToString(),
-                StartDate = DateTime.Now,
-                EndDate = DateTime.Now.AddYears(1),
-                PayRate = new Random(235).Next()
-            };
-          
-            return person;
+            var personHelper = new PersonHelper();
+            return personHelper.getPerson(id);          
         }
 
         // POST: api/Person
