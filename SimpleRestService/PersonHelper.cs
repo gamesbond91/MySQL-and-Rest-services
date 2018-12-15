@@ -1,4 +1,5 @@
-﻿using SimpleRestService.Models;
+﻿using MySql.Data.MySqlClient;
+using SimpleRestService.Models;
 using System;
 using System.Diagnostics;
 
@@ -29,14 +30,13 @@ namespace SimpleRestService
 
             catch (MySql.Data.MySqlClient.MySqlException)
             {
-                conn.Close();
-                conn.Dispose();
+                CloseConnection();
             }
         }
 
         public long SavePerson(Person personToSave)
         {
-            MySql.Data.MySqlClient.MySqlCommand mySqlCommand = InsertPersonCommand(personToSave);
+            MySqlCommand mySqlCommand = InsertPersonCommand(personToSave);
 
             try
             {
@@ -46,22 +46,52 @@ namespace SimpleRestService
             }
             catch (Exception ex)
             {
-
+                //TODO: handle ex
             }
             finally
             {
                 CloseConnection();
             }
             return 0;
-
         }
 
-        private static void CloseConnection()
+        public Person getPerson(long ID)
         {
-            conn.Close();
-            conn.Dispose();
-        }
+            Person person = new Person();
+            MySqlDataReader mySqlDataReader = null;
 
+            try
+            {
+                mySqlDataReader = SelectPersonByID(ID).ExecuteReader();
+                if (mySqlDataReader.Read())
+                {
+                    PopulatePersonWhitValuesFromDB(person, mySqlDataReader);
+                }
+                CloseConnection();
+                return person;
+
+            }
+            catch (Exception ex)
+            {
+                //TODO: handle ex
+            }
+            finally
+            {
+                CloseConnection();                
+            }
+            return null;
+        }
+        
+
+        private MySqlCommand SelectPersonByID(long ID)
+        {
+            string cmd = "SELECT * FROM tblpersons WHERE ID = @ID";
+            MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
+            mySqlCommand.Parameters.Add("@ID", ID);
+
+            return mySqlCommand; 
+        }
+  
         private static MySql.Data.MySqlClient.MySqlCommand InsertPersonCommand(Person personToSave)
         {
             string cmd = "INSERT INTO tblpersons (`FirstName`,`LastName`,`PayRate`,`StartDate`,`EndDate`) VALUES (@Fistname, @LastName,@PayRate,@StartDate,@EndDate)";
@@ -76,6 +106,22 @@ namespace SimpleRestService
             mySqlCommand.Parameters.AddWithValue("@EndDate", personToSave.EndDate.ToString(format));
        
             return mySqlCommand;
+        }
+
+        private static void PopulatePersonWhitValuesFromDB(Person person, MySqlDataReader mySqlDataReader)
+        {
+            person.ID = mySqlDataReader.GetInt32(0);
+            person.FirstName = mySqlDataReader.GetString(1);
+            person.LastName = mySqlDataReader.GetString(2);
+            person.PayRate = mySqlDataReader.GetDouble(3);
+            person.StartDate = mySqlDataReader.GetDateTime(4);
+            person.EndDate = mySqlDataReader.GetDateTime(5);
+        }
+
+        private static void CloseConnection()
+        {
+            conn.Close();
+            conn.Dispose();
         }
 
         public Process[] GetProcesses()
