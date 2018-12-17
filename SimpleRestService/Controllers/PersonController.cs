@@ -4,19 +4,21 @@ using System.Net;
 using System.Web.Http;
 using SimpleRestService.Models;
 using System.Net.Http;
+using System.Collections;
 
 namespace SimpleRestService.Controllers
 {
     public class PersonController : ApiController
     {
         // GET: api/Person
-        public IEnumerable<string> Get()
+        public ArrayList Get()
         {
-            return new string[] { "Person1", "value2" };
+            var personHelper = new PersonHelper();
+            return personHelper.GetPersons();
         }
 
         // GET: api/Person/5
-        public Person Get(int id)
+        public ArrayList Get(int id)
         {
             var personHelper = new PersonHelper();
             return personHelper.getPerson(id);          

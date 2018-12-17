@@ -2,6 +2,7 @@
 using SimpleRestService.Models;
 using System;
 using System.Diagnostics;
+using System.Collections;
 
 namespace SimpleRestService
 {
@@ -14,7 +15,7 @@ namespace SimpleRestService
         private static string database = "persons";
         private static string username = "root";
         private static string password = "Pass1234";
-        static MySql.Data.MySqlClient.MySqlConnection conn;
+        static MySqlConnection conn;
 
         public PersonHelper()
         {
@@ -23,12 +24,12 @@ namespace SimpleRestService
 
             try
             {
-                conn = new MySql.Data.MySqlClient.MySqlConnection();
+                conn = new MySqlConnection();
                 conn.ConnectionString = connectionstring;
                 conn.Open();
             }
 
-            catch (MySql.Data.MySqlClient.MySqlException)
+            catch (MySqlException)
             {
                 CloseConnection();
             }
@@ -55,20 +56,15 @@ namespace SimpleRestService
             return 0;
         }
 
-        public Person getPerson(long ID)
+        public ArrayList getPerson(long ID)
         {
-            Person person = new Person();
+            
             MySqlDataReader mySqlDataReader = null;
 
             try
             {
                 mySqlDataReader = SelectPersonByID(ID).ExecuteReader();
-                if (mySqlDataReader.Read())
-                {
-                    PopulatePersonWhitValuesFromDB(person, mySqlDataReader);
-                }
-                CloseConnection();
-                return person;
+                return ReadDataFromDBWhitCommand(mySqlDataReader);
 
             }
             catch (Exception ex)
@@ -77,11 +73,39 @@ namespace SimpleRestService
             }
             finally
             {
+                mySqlDataReader.Dispose();
                 CloseConnection();                
             }
             return null;
         }
-        
+
+
+        public ArrayList GetPersons()
+        {    
+            MySqlDataReader mySqlDataReader = null;
+
+            try
+            {
+                mySqlDataReader = SelectAllPersons().ExecuteReader();
+                return ReadDataFromDBWhitCommand(mySqlDataReader);
+            }
+            catch (Exception ex)
+            {
+                //TODO: handle ex
+            }
+            finally
+            {             
+                mySqlDataReader.Dispose();
+                CloseConnection();
+            }
+            return null;
+        }
+        private MySqlCommand SelectAllPersons()
+        {
+            string cmd = "SELECT * FROM tblpersons";
+            MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
+            return mySqlCommand;
+        }
 
         private MySqlCommand SelectPersonByID(long ID)
         {
@@ -92,10 +116,10 @@ namespace SimpleRestService
             return mySqlCommand; 
         }
   
-        private static MySql.Data.MySqlClient.MySqlCommand InsertPersonCommand(Person personToSave)
+        private static MySqlCommand InsertPersonCommand(Person personToSave)
         {
             string cmd = "INSERT INTO tblpersons (`FirstName`,`LastName`,`PayRate`,`StartDate`,`EndDate`) VALUES (@Fistname, @LastName,@PayRate,@StartDate,@EndDate)";
-            MySql.Data.MySqlClient.MySqlCommand mySqlCommand = new MySql.Data.MySqlClient.MySqlCommand(cmd, conn);
+            MySqlCommand mySqlCommand = new MySql.Data.MySqlClient.MySqlCommand(cmd, conn);
             mySqlCommand.Parameters.AddWithValue("@Fistname", personToSave.FirstName);
             mySqlCommand.Parameters.AddWithValue("@LastName", personToSave.LastName);
             mySqlCommand.Parameters.AddWithValue("@PayRate", personToSave.PayRate);
@@ -108,14 +132,32 @@ namespace SimpleRestService
             return mySqlCommand;
         }
 
-        private static void PopulatePersonWhitValuesFromDB(Person person, MySqlDataReader mySqlDataReader)
+
+        private static ArrayList ReadDataFromDBWhitCommand(MySqlDataReader mySqlDataReader)
         {
+            ArrayList Person = new ArrayList();
+            while (mySqlDataReader.Read())
+            {
+                Person.Add(PopulatePersonWhitValuesFromDB(mySqlDataReader));
+            }
+            mySqlDataReader.Close();
+            return Person;
+        }
+
+        private static ArrayList PopulatePersonWhitValuesFromDB( MySqlDataReader mySqlDataReader)
+        {
+            ArrayList persons = new ArrayList();
+
+            Person person = new Person();
             person.ID = mySqlDataReader.GetInt32(0);
             person.FirstName = mySqlDataReader.GetString(1);
             person.LastName = mySqlDataReader.GetString(2);
             person.PayRate = mySqlDataReader.GetDouble(3);
             person.StartDate = mySqlDataReader.GetDateTime(4);
             person.EndDate = mySqlDataReader.GetDateTime(5);
+            persons.Add(person);
+
+            return persons;
         }
 
         private static void CloseConnection()
