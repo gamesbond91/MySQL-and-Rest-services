@@ -37,7 +37,7 @@ namespace SimpleRestService
 
         public long SavePerson(Person personToSave)
         {
-            MySqlCommand mySqlCommand = InsertPersonCommand(personToSave);
+            MySqlCommand mySqlCommand = SqlCommandInsertPerson(personToSave);
 
             try
             {
@@ -58,12 +58,11 @@ namespace SimpleRestService
 
         public ArrayList getPerson(long ID)
         {
-            
             MySqlDataReader mySqlDataReader = null;
 
             try
             {
-                mySqlDataReader = SelectPersonByID(ID).ExecuteReader();
+                mySqlDataReader = SqlCommandSelectPersonByID(ID).ExecuteReader();
                 return ReadDataFromDBWhitCommand(mySqlDataReader);
 
             }
@@ -74,19 +73,19 @@ namespace SimpleRestService
             finally
             {
                 mySqlDataReader.Dispose();
-                CloseConnection();                
+                CloseConnection();
             }
             return null;
         }
 
 
         public ArrayList GetPersons()
-        {    
+        {
             MySqlDataReader mySqlDataReader = null;
 
             try
             {
-                mySqlDataReader = SelectAllPersons().ExecuteReader();
+                mySqlDataReader = SqlCommandSelectAllPersons().ExecuteReader();
                 return ReadDataFromDBWhitCommand(mySqlDataReader);
             }
             catch (Exception ex)
@@ -94,32 +93,117 @@ namespace SimpleRestService
                 //TODO: handle ex
             }
             finally
-            {             
+            {
                 mySqlDataReader.Dispose();
                 CloseConnection();
             }
             return null;
         }
-        private MySqlCommand SelectAllPersons()
+
+        public bool DeletePerson(long ID)
+        {
+            MySqlDataReader mySqlDataReader = null;
+            try
+            {
+                mySqlDataReader = SqlCommandSelectPersonByID(ID).ExecuteReader();
+
+                if (mySqlDataReader.Read())
+                {
+                    mySqlDataReader.Close();
+                    DeletePersonByID(ID).ExecuteNonQuery();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                //TODO: handle ex
+            }
+            finally
+            {
+                mySqlDataReader.Dispose();
+                CloseConnection();
+            }
+            return false;
+        }
+
+        public bool UpdatePerson(long ID, Person person)
+        {
+            MySqlDataReader mySqlDataReader = null;
+            try
+            {
+                mySqlDataReader = SqlCommandSelectPersonByID(ID).ExecuteReader();
+
+                if (mySqlDataReader.Read())
+                {
+                    mySqlDataReader.Close();
+                    SqlCommandUpdatePerson(person, ID).ExecuteNonQuery();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                //TODO: handle ex
+            }
+            finally
+            {
+                mySqlDataReader.Dispose();
+                CloseConnection();
+            }
+            return false;
+        }
+
+        private static void CloseConnection()
+        {
+            conn.Close();
+            conn.Dispose();
+        }
+
+        //public Process[] GetProcesses()
+        //{
+        //    var allProcesses = Process.GetProcesses();
+        //    return allProcesses;
+        //}
+
+        #region DatabaseCommands
+
+        private MySqlCommand DeletePersonByID(long ID)
+        {
+            string cmd = "DELETE FROM tblpersons WHERE ID = @ID";
+            MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
+            mySqlCommand.Parameters.Add("@ID", ID);
+            return mySqlCommand;
+        }
+
+        private MySqlCommand SqlCommandSelectAllPersons()
         {
             string cmd = "SELECT * FROM tblpersons";
             MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
             return mySqlCommand;
         }
 
-        private MySqlCommand SelectPersonByID(long ID)
+        private MySqlCommand SqlCommandSelectPersonByID(long ID)
         {
             string cmd = "SELECT * FROM tblpersons WHERE ID = @ID";
             MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
             mySqlCommand.Parameters.Add("@ID", ID);
-
-            return mySqlCommand; 
+            return mySqlCommand;
         }
-  
-        private static MySqlCommand InsertPersonCommand(Person personToSave)
+
+        private static MySqlCommand SqlCommandInsertPerson(Person personToSave)
         {
             string cmd = "INSERT INTO tblpersons (`FirstName`,`LastName`,`PayRate`,`StartDate`,`EndDate`) VALUES (@Fistname, @LastName,@PayRate,@StartDate,@EndDate)";
-            MySqlCommand mySqlCommand = new MySql.Data.MySqlClient.MySqlCommand(cmd, conn);
+            return ParametrizedSqlCommand(personToSave, cmd,null);
+        }
+
+        private static MySqlCommand SqlCommandUpdatePerson(Person UpdatedPerson, long ID)
+        {
+            string cmd = "UPDATE tblpersons SET `FirstName`= @Fistname, `LastName`=@LastName,`PayRate`=@PayRate,`StartDate` =@StartDate ,`EndDate =@EndDate` WHERE 'ID' = @ID";
+            return ParametrizedSqlCommand(UpdatedPerson, cmd, ID.ToString());
+        }
+
+        private static MySqlCommand ParametrizedSqlCommand(Person personToSave, string cmd, string ID = null)
+        {
+            MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
             mySqlCommand.Parameters.AddWithValue("@Fistname", personToSave.FirstName);
             mySqlCommand.Parameters.AddWithValue("@LastName", personToSave.LastName);
             mySqlCommand.Parameters.AddWithValue("@PayRate", personToSave.PayRate);
@@ -128,11 +212,11 @@ namespace SimpleRestService
 
             mySqlCommand.Parameters.AddWithValue("@StartDate", personToSave.StartDate.ToString(format));
             mySqlCommand.Parameters.AddWithValue("@EndDate", personToSave.EndDate.ToString(format));
-       
+            if(ID==null)
+                mySqlCommand.Parameters.AddWithValue("@ID", ID);
+         
             return mySqlCommand;
         }
-
-
         private static ArrayList ReadDataFromDBWhitCommand(MySqlDataReader mySqlDataReader)
         {
             ArrayList Person = new ArrayList();
@@ -144,7 +228,7 @@ namespace SimpleRestService
             return Person;
         }
 
-        private static ArrayList PopulatePersonWhitValuesFromDB( MySqlDataReader mySqlDataReader)
+        private static ArrayList PopulatePersonWhitValuesFromDB(MySqlDataReader mySqlDataReader)
         {
             ArrayList persons = new ArrayList();
 
@@ -159,18 +243,8 @@ namespace SimpleRestService
 
             return persons;
         }
-
-        private static void CloseConnection()
-        {
-            conn.Close();
-            conn.Dispose();
-        }
-
-        public Process[] GetProcesses()
-        {
-            var allProcesses = Process.GetProcesses();
-            return allProcesses;
-        }
     }
-    
+
+    #endregion
 }
+
