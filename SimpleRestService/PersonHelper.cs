@@ -1,7 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using SimpleRestService.Models;
 using System;
-using System.Diagnostics;
+using System.Configuration;
 using System.Collections;
 
 namespace SimpleRestService
@@ -9,164 +9,159 @@ namespace SimpleRestService
 
     public class PersonHelper
     {
-        //TODO: Move the private parameters in config file
-        private static string myServerAddress = "127.0.0.1";
-        private static string dbPort = "3306";
-        private static string database = "persons";
-        private static string username = "root";
-        private static string password = "Pass1234";
-        static MySqlConnection conn;
+        private static string connectionstring = ConfigurationManager.ConnectionStrings["localDB"].ConnectionString;
+        //private static string connectionstring = $"Server=tcp:kirmajerdatabase1.database.windows.net,1433;Initial Catalog=Database1;Persist Security Info=False;User ID={username};Password={password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
 
-        public PersonHelper()
-        {
-            //string connectionstring = $"Server=tcp:kirmajerdatabase1.database.windows.net,1433;Initial Catalog=Database1;Persist Security Info=False;User ID={username};Password={password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
-            string connectionstring = $"server={myServerAddress};Port={dbPort};uid={username};pwd={password};database={database}";
+        //public PersonHelper()
+        //{
+        //    //string connectionstring = $"Server=tcp:kirmajerdatabase1.database.windows.net,1433;Initial Catalog=Database1;Persist Security Info=False;User ID={username};Password={password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
 
-            try
-            {
-                conn = new MySqlConnection();
-                conn.ConnectionString = connectionstring;
-                conn.Open();
-            }
-
-            catch (MySqlException)
-            {
-                CloseConnection();
-            }
-        }
+        //}
 
         public long SavePerson(Person personToSave)
         {
-            MySqlCommand mySqlCommand = SqlCommandInsertPerson(personToSave);
+            MySqlConnection conn;
+            conn = new MySqlConnection(connectionstring);
+
+            MySqlCommand mySqlCommand = SqlCommandInsertPerson(personToSave, conn);
 
             try
             {
+                conn.Open();
                 mySqlCommand.ExecuteNonQuery();
-                CloseConnection();
+                conn.Close();
                 return mySqlCommand.LastInsertedId;
             }
             catch (Exception ex)
             {
-                //TODO: handle ex
+                throw ex;
             }
             finally
             {
-                CloseConnection();
-            }
-            return 0;
+                CloseConnection(conn);
+            }     
         }
 
         public ArrayList getPerson(long ID)
         {
+            MySqlConnection conn;
+            conn = new MySqlConnection(connectionstring);
+
             MySqlDataReader mySqlDataReader = null;
 
             try
             {
-                mySqlDataReader = SqlCommandSelectPersonByID(ID).ExecuteReader();
+                conn.Open();
+                mySqlDataReader = SqlCommandSelectPersonByID(ID, conn).ExecuteReader();
                 return ReadDataFromDBWhitCommand(mySqlDataReader);
 
             }
             catch (Exception ex)
             {
-                //TODO: handle ex
+                throw ex;
             }
             finally
             {
                 mySqlDataReader.Dispose();
-                CloseConnection();
-            }
-            return null;
+                CloseConnection(conn);
+            }         
         }
 
 
         public ArrayList GetPersons()
         {
+            MySqlConnection conn;
+            conn = new MySqlConnection(connectionstring);
+
             MySqlDataReader mySqlDataReader = null;
 
             try
-            {
-                mySqlDataReader = SqlCommandSelectAllPersons().ExecuteReader();
+            {                
+                conn.Open();
+                mySqlDataReader = SqlCommandSelectAllPersons(conn).ExecuteReader();
                 return ReadDataFromDBWhitCommand(mySqlDataReader);
             }
             catch (Exception ex)
             {
-                //TODO: handle ex
+                throw ex;
             }
             finally
             {
                 mySqlDataReader.Dispose();
-                CloseConnection();
+                CloseConnection(conn);
             }
-            return null;
         }
 
         public bool DeletePerson(long ID)
         {
+            MySqlConnection conn;
+            conn = new MySqlConnection(connectionstring);
+
             MySqlDataReader mySqlDataReader = null;
             try
             {
-                mySqlDataReader = SqlCommandSelectPersonByID(ID).ExecuteReader();
+                conn.Open();
+                mySqlDataReader = SqlCommandSelectPersonByID(ID, conn).ExecuteReader();
 
                 if (mySqlDataReader.Read())
                 {
                     mySqlDataReader.Close();
-                    DeletePersonByID(ID).ExecuteNonQuery();
+                    DeletePersonByID(ID, conn).ExecuteNonQuery();
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                //TODO: handle ex
+                throw ex;
             }
             finally
             {
                 mySqlDataReader.Dispose();
-                CloseConnection();
+                CloseConnection(conn);
             }
             return false;
         }
 
         public bool UpdatePerson(long ID, Person person)
         {
+            MySqlConnection conn;
+            conn = new MySqlConnection(connectionstring);
+
             MySqlDataReader mySqlDataReader = null;
             try
             {
-                mySqlDataReader = SqlCommandSelectPersonByID(ID).ExecuteReader();
+                conn.Open();
+                mySqlDataReader = SqlCommandSelectPersonByID(ID, conn).ExecuteReader();
 
                 if (mySqlDataReader.Read())
                 {
                     mySqlDataReader.Close();
-                    SqlCommandUpdatePerson(person, ID).ExecuteNonQuery();
+                    SqlCommandUpdatePerson(person, conn, ID).ExecuteNonQuery();
                     return true;
                 }
             }
             catch (Exception ex)
             {
-                //TODO: handle ex
+                throw ex;
             }
             finally
             {
                 mySqlDataReader.Dispose();
-                CloseConnection();
+                CloseConnection(conn);
             }
             return false;
         }
 
-        private static void CloseConnection()
+        private static void CloseConnection(MySqlConnection conn)
         {
             conn.Close();
             conn.Dispose();
         }
 
-        //public Process[] GetProcesses()
-        //{
-        //    var allProcesses = Process.GetProcesses();
-        //    return allProcesses;
-        //}
 
         #region DatabaseCommands
 
-        private MySqlCommand DeletePersonByID(long ID)
+        private MySqlCommand DeletePersonByID(long ID, MySqlConnection conn)
         {
             string cmd = "DELETE FROM tblpersons WHERE ID = @ID";
             MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
@@ -174,14 +169,14 @@ namespace SimpleRestService
             return mySqlCommand;
         }
 
-        private MySqlCommand SqlCommandSelectAllPersons()
+        private MySqlCommand SqlCommandSelectAllPersons(MySqlConnection conn)
         {
             string cmd = "SELECT * FROM tblpersons";
             MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
             return mySqlCommand;
         }
 
-        private MySqlCommand SqlCommandSelectPersonByID(long ID)
+        private MySqlCommand SqlCommandSelectPersonByID(long ID, MySqlConnection conn)
         {
             string cmd = "SELECT * FROM tblpersons WHERE ID = @ID";
             MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
@@ -189,19 +184,19 @@ namespace SimpleRestService
             return mySqlCommand;
         }
 
-        private static MySqlCommand SqlCommandInsertPerson(Person personToSave)
+        private static MySqlCommand SqlCommandInsertPerson(Person personToSave, MySqlConnection conn)
         {
             string cmd = "INSERT INTO tblpersons (`FirstName`,`LastName`,`PayRate`,`StartDate`,`EndDate`) VALUES (@Fistname, @LastName,@PayRate,@StartDate,@EndDate)";
-            return ParametrizedSqlCommand(personToSave, cmd,null);
+            return ParametrizedSqlCommand(personToSave, conn, cmd, null);
         }
 
-        private static MySqlCommand SqlCommandUpdatePerson(Person UpdatedPerson, long ID)
+        private static MySqlCommand SqlCommandUpdatePerson(Person UpdatedPerson, MySqlConnection conn, long ID)
         {
             string cmd = "UPDATE tblpersons SET `FirstName`= @Fistname, `LastName`=@LastName,`PayRate`=@PayRate,`StartDate` =@StartDate ,`EndDate =@EndDate` WHERE 'ID' = @ID";
-            return ParametrizedSqlCommand(UpdatedPerson, cmd, ID.ToString());
+            return ParametrizedSqlCommand(UpdatedPerson, conn, cmd, ID.ToString());
         }
 
-        private static MySqlCommand ParametrizedSqlCommand(Person personToSave, string cmd, string ID = null)
+        private static MySqlCommand ParametrizedSqlCommand(Person personToSave, MySqlConnection conn, string cmd, string ID = null)
         {
             MySqlCommand mySqlCommand = new MySqlCommand(cmd, conn);
             mySqlCommand.Parameters.AddWithValue("@Fistname", personToSave.FirstName);
@@ -212,9 +207,9 @@ namespace SimpleRestService
 
             mySqlCommand.Parameters.AddWithValue("@StartDate", personToSave.StartDate.ToString(format));
             mySqlCommand.Parameters.AddWithValue("@EndDate", personToSave.EndDate.ToString(format));
-            if(ID==null)
+            if (ID == null)
                 mySqlCommand.Parameters.AddWithValue("@ID", ID);
-         
+
             return mySqlCommand;
         }
         private static ArrayList ReadDataFromDBWhitCommand(MySqlDataReader mySqlDataReader)

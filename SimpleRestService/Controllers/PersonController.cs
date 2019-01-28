@@ -10,6 +10,10 @@ namespace SimpleRestService.Controllers
 {
     public class PersonController : ApiController
     {
+        /// <summary>
+        /// Get all persons
+        /// </summary>
+        /// <returns></returns>
         // GET: api/Person
         public ArrayList Get()
         {
@@ -17,13 +21,26 @@ namespace SimpleRestService.Controllers
             return personHelper.GetPersons();
         }
 
+        /// <summary>
+        /// Get a person by ID
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <returns></returns>
         // GET: api/Person/5
         public ArrayList Get(int ID)
         {
             var personHelper = new PersonHelper();
-            return personHelper.getPerson(ID);          
+            var response = personHelper.getPerson(ID);
+            if (response.Count.Equals(0))
+                throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
+            return response;
         }
 
+        /// <summary>
+        /// Save a new person in the database
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
         // POST: api/Person
         public HttpResponseMessage Post([FromBody] Person value)
         {
@@ -35,6 +52,12 @@ namespace SimpleRestService.Controllers
             return httpResponse;
         }
 
+        /// <summary>
+        /// Update an existing person by ID
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <param name="value"></param>
+        /// <returns></returns>
         // PUT: api/Person/5
         public  HttpResponseMessage Put(long ID, [FromBody]Person value)
         {
@@ -51,6 +74,12 @@ namespace SimpleRestService.Controllers
             }
         }
 
+
+        /// <summary>
+        /// Delete a person from database by ID
+        /// </summary>
+        /// <param name="ID"></param>
+        /// <returns></returns>
         // DELETE: api/Person/5
         public HttpResponseMessage Delete(long ID)
         {
