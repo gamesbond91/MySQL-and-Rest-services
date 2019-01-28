@@ -30,7 +30,10 @@ namespace SimpleRestService.Controllers
         public ArrayList Get(int ID)
         {
             var personHelper = new PersonHelper();
-            return personHelper.getPerson(ID);          
+            var response = personHelper.getPerson(ID);
+            if (response.Count.Equals(0))
+                throw new HttpResponseException(new HttpResponseMessage(HttpStatusCode.NotFound));
+            return response;
         }
 
         /// <summary>
