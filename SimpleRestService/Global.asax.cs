@@ -1,5 +1,6 @@
 ﻿using System.Web.Http;
 using System.Web.Mvc;
+using SimpleRestService.MessageHandlers;
 
 namespace SimpleRestService
 {
@@ -9,6 +10,7 @@ namespace SimpleRestService
         {
             AreaRegistration.RegisterAllAreas();
             GlobalConfiguration.Configure(WebApiConfig.Register);
+            GlobalConfiguration.Configuration.MessageHandlers.Add(new APIMessageHandler());
         }
     }
 }

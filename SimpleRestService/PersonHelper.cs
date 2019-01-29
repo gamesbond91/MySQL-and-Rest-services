@@ -9,15 +9,9 @@ namespace SimpleRestService
 
     public class PersonHelper
     {
+
         private static string connectionstring = ConfigurationManager.ConnectionStrings["localDB"].ConnectionString;
-        //private static string connectionstring = $"Server=tcp:kirmajerdatabase1.database.windows.net,1433;Initial Catalog=Database1;Persist Security Info=False;User ID={username};Password={password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
-
-        //public PersonHelper()
-        //{
-        //    //string connectionstring = $"Server=tcp:kirmajerdatabase1.database.windows.net,1433;Initial Catalog=Database1;Persist Security Info=False;User ID={username};Password={password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
-
-        //}
-
+       
         public long SavePerson(Person personToSave)
         {
             MySqlConnection conn;
